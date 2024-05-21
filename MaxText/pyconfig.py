@@ -52,7 +52,7 @@ _yaml_types_to_parser = {str: str, int: int, float: float, bool: string_to_bool}
 
 
 def validate_attention_type(s: str) -> None:
-  valid_attention_types = ("autoselected", "dot_product", "flash", "cudnn_flash_te")
+  valid_attention_types = ("autoselected", "dot_product", "flash", "cudnn_flash_te", "cudnn_flash_jax")
   if s not in valid_attention_types:  # currently supported attention
     raise ValueError("Invalid attention type was passed. Valid options ", valid_attention_types)
 
