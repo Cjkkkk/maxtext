@@ -349,7 +349,6 @@ class AttentionOp(nn.Module):
         mask_type=MaskType.CAUSAL,
         dropout_rate=self.dropout_rate,
         qkv_layout="BTNH",
-        is_training=True,
     )
 
   def compute_local_attention(self, attn_weights: Array, value: Array | KVTensor, q_seq_len: int, model_mode: str) -> tuple[Array, Array, Array]:
