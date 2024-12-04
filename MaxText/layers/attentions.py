@@ -255,6 +255,12 @@ class AttentionOp(nn.Module):
                            Use `dot_product` instead."""
         )
       return self.cudnn_flash_attention(query, key, value, decoder_segment_ids, model_mode), None, None
+    elif self.attention_kernel == "cudnn_flash_jax":
+      if isinstance(key, KVTensor):
+        key = key.dequant()
+      if isinstance(value, KVTensor):
+        value = value.dequant()
+      return self.cudnn_jax_flash_attention(query, key, value, decoder_segment_ids, model_mode), None, None
     else:
       raise ValueError(f"Unexpected attention kernel {self.attention_kernel=}.")
 
@@ -419,6 +425,33 @@ class AttentionOp(nn.Module):
         transpose_batch_sequence=False,
     )
     return dpa_layer(query, key, value, mask=attn_mask)
+
+  def cudnn_jax_flash_attention(
+      self,
+      query: Array,
+      key: Array,
+      value: Array,
+      decoder_segment_ids: Array | None,
+      model_mode: str = common_types.MODEL_MODE_TRAIN,
+  ) -> Array:
+    """CUDNN Flash Attention with JAX SDPA API.
+    """
+    from jax._src.cudnn.fused_attention_stablehlo import (
+      dot_product_attention,
+      MaskType,
+    )
+
+    _, _, _, head_dim = query.shape  # pylint: disable=unused-variable
+
+    return dot_product_attention(
+        query,
+        key,
+        value,
+        scale=1.0 / math.sqrt(head_dim),
+        mask_type=MaskType.CAUSAL,
+        dropout_rate=self.dropout_rate,
+        qkv_layout="BTNH",
+    )
 
   def compute_local_attention(
       self, attn_weights: Array, value: Array | KVTensor, q_seq_len: int, model_mode: str
