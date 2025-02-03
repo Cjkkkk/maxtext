@@ -451,6 +451,7 @@ class AttentionOp(nn.Module):
         mask_type=MaskType.CAUSAL,
         dropout_rate=self.dropout_rate,
         qkv_layout="BTNH",
+        output_checkpoint_name="context"
     )
 
   def compute_local_attention(
